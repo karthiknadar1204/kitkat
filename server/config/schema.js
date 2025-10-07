@@ -20,6 +20,14 @@ export const stats = pgTable('stats', {
   sessionId: integer('session_id').references(() => sessions.id),
   avgLatency: integer('avg_latency'),
   totalTokens: integer('total_tokens'),
-  totalCost: integer('total_cost'), // cents
+  totalCost: integer('total_cost'),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const apiKeys = pgTable('api_keys', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  key: varchar('key', { length: 255 }).unique().notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
 });

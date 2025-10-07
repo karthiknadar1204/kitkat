@@ -9,26 +9,34 @@ export const ingestTrace = async (req, res) => {
   const { sessionId, appName, spans, metadata = {} } = req.body;
   const { id: userId } = req.user;
 
-  const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId));
-  if (!session || session.userId !== userId) {
-    return res.status(404).json({ error: 'Invalid session' });
+  let finalSessionId = sessionId;
+  if (!sessionId) {
+
+    const [newSession] = await db.insert(sessions).values({ userId, appName }).returning();
+    finalSessionId = newSession.id;
+    console.log(`Auto-created session ${finalSessionId} for user ${userId}`);
+  } else {
+
+    const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId));
+    if (!session || session.userId !== userId) {
+      return res.status(404).json({ error: 'Invalid session' });
+    }
   }
 
   const traceId = uuidv4();
   const newTrace = new Trace({
     traceId,
     userId,
-    sessionId,
+    sessionId: finalSessionId,
     appName,
     spans,
     metadata,
   });
   await newTrace.save();
-  
 
-  processTraceStats(sessionId, spans);
-  
-  res.status(201).json({ message: 'Trace ingested', traceId });
+  processTraceStats(finalSessionId, spans);
+
+  res.status(201).json({ message: 'Trace ingested', traceId, sessionId: finalSessionId });
 };
 
 export const getTraces = async (req, res) => {

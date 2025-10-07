@@ -15,6 +15,13 @@
       "when": 1759839204915,
       "tag": "0001_complex_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759842392363,
+      "tag": "0002_slim_masked_marvel",
+      "breakpoints": true
     }
   ]
 }

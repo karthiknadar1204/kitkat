@@ -7,9 +7,9 @@ import mongoose from 'mongoose'
 import authRoutes from './routes/auth.route.js'
 import sessionsRoutes from './routes/sessions.route.js'
 import tracesRoutes from './routes/traces.route.js'
+import apiKeysRoutes from './routes/apiKeys.route.js'
 
 // dotenv.config()
-// MongoDB Connection IIFE
 (async () => {
   try {
     await mongoose.connect(process.env.MONGODB_DATABASE_URL);
@@ -33,6 +33,7 @@ app.use(bodyParser.json())
 app.use("/api/auth",authRoutes)
 app.use("/api/sessions",sessionsRoutes)
 app.use("/api/traces",tracesRoutes)
+app.use("/api/api-keys",apiKeysRoutes)
 app.listen(3002,()=>{
     console.log("server is running on port 3002")  
 })
