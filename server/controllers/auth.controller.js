@@ -42,7 +42,7 @@ export const signin = async (req, res) => {
         return res.status(401).json({ success: false, message: "Invalid password" });
     }
 
-    const token = jwt.sign({ id: user.id }, "dfvbgbfvdb", { expiresIn: "1d" });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: "1d" });
 
     res.cookie("token", token, {
         httpOnly: true,
