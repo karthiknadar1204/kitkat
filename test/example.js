@@ -71,6 +71,50 @@ async function runTests() {
     console.error('❌ Test 3 failed:', err.message);
   }
 
+  // Test 4: Embeddings
+  console.log('\n🧪 Test 4: Embeddings...');
+  try {
+    const response = await sdk.embeddings({
+      model: 'text-embedding-3-small',
+      input: 'This is a test sentence for embedding generation',
+    });
+    console.log('✅ Embeddings created:', response.data.length, 'vectors');
+    console.log('✅ Dimensions:', response.data[0].embedding.length);
+  } catch (err) {
+    console.error('❌ Test 4 failed:', err.message);
+  }
+
+  // Test 5: Tool/Function Calling
+  console.log('\n🧪 Test 5: Tool Invocation (Function Calling)...');
+  try {
+    const response = await sdk.chatCompletionsWithTools(
+      {
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: 'What is the weather in Paris?' }],
+      },
+      [
+        {
+          name: 'get_weather',
+          description: 'Get current weather for a city',
+          parameters: {
+            type: 'object',
+            properties: {
+              city: { type: 'string', description: 'City name' },
+            },
+            required: ['city'],
+          },
+          fn: async (args) => {
+            console.log('🔧 Tool called: get_weather for', args.city);
+            return { temperature: 22, condition: 'sunny', city: args.city };
+          },
+        },
+      ]
+    );
+    console.log('✅ Tool response:', response.choices[0].message.content);
+  } catch (err) {
+    console.error('❌ Test 5 failed:', err.message);
+  }
+
   // Verify traces
   try {
     const tracesRes = await axios.get(`${process.env.LANGSMITH_ENDPOINT}/api/traces`, {

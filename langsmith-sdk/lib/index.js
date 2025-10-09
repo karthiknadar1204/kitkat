@@ -78,6 +78,161 @@ class Kyra {
     }
   }
 
+  async embeddings(params) {
+    const startTime = Date.now();
+    
+    try {
+      const response = await this.openai.embeddings.create(params);
+      const latency = Date.now() - startTime;
+
+      if (this.shouldTrace()) {
+        const span = {
+          name: 'openai-embeddings',
+          input: params,
+          output: response,
+          latency,
+          tokens: {
+            input: response.usage?.prompt_tokens || 0,
+            output: 0,
+          },
+        };
+
+        await this.sendTrace({
+          appName: this.project,
+          spans: [span],
+          metadata: { method: 'embeddings.create' },
+          sessionId: this.sessionId,
+        });
+      }
+
+      return response;
+      
+    } catch (err) {
+      const latency = Date.now() - startTime;
+      
+      if (this.shouldTrace()) {
+        await this.sendTrace({
+          appName: this.project,
+          spans: [{
+            name: 'openai-embeddings-error',
+            input: params,
+            output: { error: err.message },
+            latency,
+            tokens: { input: 0, output: 0 },
+          }],
+          metadata: { method: 'embeddings.create', error: true },
+          sessionId: this.sessionId,
+        });
+      }
+      
+      throw err;
+    }
+  }
+
+  async chatCompletionsWithTools(params, tools = []) {
+    const startTime = Date.now();
+    const allSpans = [];
+    let messages = [...params.messages];
+    const maxIterations = 10;
+    let iterations = 0;
+
+    try {
+      while (iterations < maxIterations) {
+        iterations++;
+        const iterStart = Date.now();
+        
+        const toolSchemas = tools.map(t => ({
+          type: 'function',
+          function: {
+            name: t.name,
+            description: t.description,
+            parameters: t.parameters,
+          }
+        }));
+
+        const response = await this.openai.chat.completions.create({
+          ...params,
+          messages,
+          tools: toolSchemas.length > 0 ? toolSchemas : undefined,
+        });
+
+        const iterLatency = Date.now() - iterStart;
+        
+        allSpans.push({
+          name: `llm-call-${iterations}`,
+          input: { messages, tools: toolSchemas },
+          output: response,
+          latency: iterLatency,
+          tokens: {
+            input: response.usage?.prompt_tokens || 0,
+            output: response.usage?.completion_tokens || 0,
+          },
+        });
+
+        const assistantMessage = response.choices[0].message;
+        messages.push(assistantMessage);
+
+        if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
+          if (this.shouldTrace()) {
+            await this.sendTrace({
+              appName: this.project,
+              spans: allSpans,
+              metadata: { method: 'chat.completions.withTools', iterations },
+              sessionId: this.sessionId,
+            });
+          }
+          return response;
+        }
+
+        for (const toolCall of assistantMessage.tool_calls) {
+          const tool = tools.find(t => t.name === toolCall.function.name);
+          if (!tool) continue;
+
+          const toolStart = Date.now();
+          const args = JSON.parse(toolCall.function.arguments);
+          const toolResult = await tool.fn(args);
+          const toolLatency = Date.now() - toolStart;
+
+          allSpans.push({
+            name: `tool-${toolCall.function.name}`,
+            input: args,
+            output: toolResult,
+            latency: toolLatency,
+            tokens: { input: 0, output: 0 },
+          });
+
+          messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(toolResult),
+          });
+        }
+      }
+
+      throw new Error('Max tool iterations reached');
+      
+    } catch (err) {
+      const latency = Date.now() - startTime;
+      
+      if (this.shouldTrace()) {
+        await this.sendTrace({
+          appName: this.project,
+          spans: [...allSpans, {
+            name: 'tool-error',
+            input: params,
+            output: { error: err.message },
+            latency,
+            tokens: { input: 0, output: 0 },
+          }],
+          metadata: { method: 'chat.completions.withTools', error: true },
+          sessionId: this.sessionId,
+        });
+      }
+      
+      throw err;
+    }
+  }
+
   async wrapChain(steps, appName = this.project) {
     const startTime = Date.now();
     const spans = [];
