@@ -3,6 +3,16 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
+class KyraError extends Error {
+  constructor(message, originalError, method) {
+    super(message);
+    this.name = 'KyraError';
+    this.originalError = originalError;
+    this.method = method;
+    this.timestamp = new Date().toISOString();
+  }
+}
+
 class Kyra {
   constructor(options = {}) {
     const {
@@ -15,7 +25,11 @@ class Kyra {
     if (!apiKey) throw new Error('LANGSMITH_API_KEY required');
     if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY required');
     
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    this.openai = new OpenAI({ 
+      apiKey: process.env.OPENAI_API_KEY,
+      timeout: 30000,
+      maxRetries: 2,
+    });
     this.endpoint = endpoint;
     this.apiKey = apiKey;
     this.project = project;
@@ -58,6 +72,11 @@ class Kyra {
       
     } catch (err) {
       const latency = Date.now() - startTime;
+      const errorDetails = {
+        message: err.message,
+        code: err.code || err.type || 'unknown',
+        status: err.status || err.statusCode,
+      };
       
       if (this.shouldTrace()) {
         await this.sendTrace({
@@ -65,16 +84,29 @@ class Kyra {
           spans: [{
             name: 'openai-chat-error',
             input: params,
-            output: { error: err.message },
+            output: { 
+              error: errorDetails.message,
+              code: errorDetails.code,
+              status: errorDetails.status,
+            },
             latency,
             tokens: { input: 0, output: 0 },
           }],
-          metadata: { method: 'chat.completions.create', error: true },
+          metadata: { 
+            method: 'chat.completions.create', 
+            error: true,
+            errorCode: errorDetails.code,
+            httpStatus: errorDetails.status,
+          },
           sessionId: this.sessionId,
         });
       }
       
-      throw err;
+      throw new KyraError(
+        `Chat completion failed: ${errorDetails.message}`,
+        err,
+        'chatCompletions'
+      );
     }
   }
 
@@ -109,6 +141,11 @@ class Kyra {
       
     } catch (err) {
       const latency = Date.now() - startTime;
+      const errorDetails = {
+        message: err.message,
+        code: err.code || err.type || 'unknown',
+        status: err.status || err.statusCode,
+      };
       
       if (this.shouldTrace()) {
         await this.sendTrace({
@@ -116,16 +153,29 @@ class Kyra {
           spans: [{
             name: 'openai-embeddings-error',
             input: params,
-            output: { error: err.message },
+            output: { 
+              error: errorDetails.message,
+              code: errorDetails.code,
+              status: errorDetails.status,
+            },
             latency,
             tokens: { input: 0, output: 0 },
           }],
-          metadata: { method: 'embeddings.create', error: true },
+          metadata: { 
+            method: 'embeddings.create', 
+            error: true,
+            errorCode: errorDetails.code,
+            httpStatus: errorDetails.status,
+          },
           sessionId: this.sessionId,
         });
       }
       
-      throw err;
+      throw new KyraError(
+        `Embeddings failed: ${errorDetails.message}`,
+        err,
+        'embeddings'
+      );
     }
   }
 
@@ -213,6 +263,11 @@ class Kyra {
       
     } catch (err) {
       const latency = Date.now() - startTime;
+      const errorDetails = {
+        message: err.message,
+        code: err.code || err.type || 'unknown',
+        status: err.status || err.statusCode,
+      };
       
       if (this.shouldTrace()) {
         await this.sendTrace({
@@ -220,16 +275,30 @@ class Kyra {
           spans: [...allSpans, {
             name: 'tool-error',
             input: params,
-            output: { error: err.message },
+            output: { 
+              error: errorDetails.message,
+              code: errorDetails.code,
+              status: errorDetails.status,
+            },
             latency,
             tokens: { input: 0, output: 0 },
           }],
-          metadata: { method: 'chat.completions.withTools', error: true },
+          metadata: { 
+            method: 'chat.completions.withTools', 
+            error: true,
+            errorCode: errorDetails.code,
+            httpStatus: errorDetails.status,
+            iterations,
+          },
           sessionId: this.sessionId,
         });
       }
       
-      throw err;
+      throw new KyraError(
+        `Tool completion failed: ${errorDetails.message}`,
+        err,
+        'chatCompletionsWithTools'
+      );
     }
   }
 
@@ -277,32 +346,59 @@ class Kyra {
       };
       
     } catch (err) {
+      const errorDetails = {
+        message: err.message,
+        code: err.code || err.type || 'unknown',
+        status: err.status || err.statusCode,
+      };
+      
       if (this.shouldTrace()) {
         await this.sendTrace({
           appName,
           spans: [...spans, {
             name: 'chain-error',
             input: steps[spans.length]?.params || {},
-            output: { error: err.message },
+            output: { 
+              error: errorDetails.message,
+              code: errorDetails.code,
+              status: errorDetails.status,
+            },
             latency: Date.now() - startTime,
             tokens: { input: 0, output: 0 },
           }],
-          metadata: { method: 'chain', error: true },
+          metadata: { 
+            method: 'chain', 
+            error: true,
+            errorCode: errorDetails.code,
+            httpStatus: errorDetails.status,
+            completedSteps: spans.length,
+          },
           sessionId: this.sessionId,
         });
       }
-      throw err;
+      throw new KyraError(
+        `Chain failed at step ${spans.length + 1}: ${errorDetails.message}`,
+        err,
+        'wrapChain'
+      );
     }
   }
 
-  async sendTrace(payload) {
+  async sendTrace(payload, retries = 2) {
     try {
       const response = await axios.post(`${this.endpoint}/traces`, payload, {
         headers: { 'X-API-Key': this.apiKey },
+        timeout: 5000,
       });
       return response;
     } catch (err) {
-      console.warn('Failed to send trace:', err.message);
+      if (retries > 0 && err.code !== 'ECONNABORTED') {
+        const delay = 1000 * (3 - retries);
+        console.warn(`Retrying trace send (${retries} attempts left) after ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.sendTrace(payload, retries - 1);
+      }
+      console.warn('Failed to send trace after retries:', err.message);
       return { data: {} };
     }
   }
