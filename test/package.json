@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "axios": "^1.12.2",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "kyra": "file:../langsmith-sdk/kyra-0.1.0.tgz"
   }
 }

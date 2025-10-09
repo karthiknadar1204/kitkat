@@ -1,6 +1,6 @@
 require('dotenv').config();
 const axios = require('axios');
-const LangSmithSDK = require('../langsmith-sdk/lib/index.js');
+const Kyra = require('kyra');
 
 if (process.env.LANGSMITH_TRACING !== 'true') {
   console.log('Tracing disabled—set LANGSMITH_TRACING=true');
@@ -8,7 +8,7 @@ if (process.env.LANGSMITH_TRACING !== 'true') {
 }
 
 async function runTests() {
-  const sdk = new LangSmithSDK({
+  const sdk = new Kyra({
     endpoint: process.env.LANGSMITH_ENDPOINT,
     project: process.env.LANGSMITH_PROJECT,
   });

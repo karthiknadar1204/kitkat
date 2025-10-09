@@ -3,78 +3,36 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
-class LangSmithSDK {
+class Kyra {
   constructor(options = {}) {
     const {
       apiKey = process.env.LANGSMITH_API_KEY,
       endpoint = process.env.LANGSMITH_ENDPOINT || 'http://localhost:3002/api',
       project = process.env.LANGSMITH_PROJECT || 'default',
-      tracingEnabled = process.env.LANGSMITH_TRACING === 'true',
-      sampleRate = parseFloat(process.env.LANGSMITH_SAMPLE_RATE) || 1.0, // 1.0 = 100%
+      tracingEnabled = process.env.LANGSMITH_TRACING !== 'false',
     } = options;
+    
     if (!apiKey) throw new Error('LANGSMITH_API_KEY required');
-    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY environment variable required');
+    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY required');
     
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     this.endpoint = endpoint;
     this.apiKey = apiKey;
     this.project = project;
     this.tracingEnabled = tracingEnabled;
-    this.sampleRate = Math.max(0, Math.min(1, sampleRate)); // Clamp 0–1
     this.sessionId = null;
-    
-    console.log('🔧 SDK Configuration:');
-    console.log('  - Tracing Enabled:', this.tracingEnabled);
-    console.log('  - Sample Rate:', this.sampleRate);
-    console.log('  - Project:', this.project);
-    console.log('  - Endpoint:', this.endpoint);
   }
 
-  // Should we trace this call? (Random sampling)
   shouldTrace() {
-    return this.tracingEnabled && Math.random() < this.sampleRate;
+    return this.tracingEnabled;
   }
 
-  // Start session (optional)
-  async startSession(appName) {
-    if (!this.shouldTrace()) {
-      console.log('📊 Tracing disabled - skipping session creation');
-      return null;
-    }
-    
-    try {
-      console.log('🚀 Starting session:', appName);
-      const response = await axios.post(
-        `${this.endpoint}/traces`,
-        { appName, spans: [], metadata: { action: 'start-session' } },
-        { headers: { 'X-API-Key': this.apiKey } }
-      );
-      this.sessionId = response.data.sessionId;
-      console.log('✅ Session created:', this.sessionId);
-      return this.sessionId;
-    } catch (err) {
-      console.warn('⚠️ Failed to start session:', err.message);
-      return null;
-    }
-  }
-
-  // Single LLM call
   async chatCompletions(params) {
     const startTime = Date.now();
     
-    console.log('\n🚀 ===== LANGSMITH SDK TRACE START =====');
-    console.log('📝 Input Parameters:', JSON.stringify(params, null, 2));
-    console.log('🎲 Should Trace:', this.shouldTrace());
-    
     try {
-      console.log('🤖 Making OpenAI API call...');
       const response = await this.openai.chat.completions.create(params);
       const latency = Date.now() - startTime;
-      
-      console.log('✅ OpenAI Response received!');
-      console.log('📊 Response Data:', JSON.stringify(response, null, 2));
-      console.log('⏱️  Latency:', latency + 'ms');
-      console.log('🔢 Tokens - Input:', response.usage?.prompt_tokens || 0, 'Output:', response.usage?.completion_tokens || 0);
 
       if (this.shouldTrace()) {
         const span = {
@@ -94,20 +52,14 @@ class LangSmithSDK {
           metadata: { method: 'chat.completions.create' },
           sessionId: this.sessionId,
         });
-      } else {
-        console.log('📊 Tracing disabled - skipping trace send');
       }
 
-      console.log('🏁 ===== LANGSMITH SDK TRACE END =====\n');
       return response;
       
     } catch (err) {
       const latency = Date.now() - startTime;
-      console.error('❌ OpenAI API Error:', err.message);
-      console.error('🔍 Error Details:', err);
       
       if (this.shouldTrace()) {
-        console.log('📤 Sending error trace...');
         await this.sendTrace({
           appName: this.project,
           spans: [{
@@ -122,42 +74,20 @@ class LangSmithSDK {
         });
       }
       
-      console.log('🏁 ===== LANGSMITH SDK TRACE END =====\n');
-      throw err; // Re-throw to let app handle
+      throw err;
     }
   }
 
-  // Multi-step chain
   async wrapChain(steps, appName = this.project) {
     const startTime = Date.now();
     const spans = [];
 
-    console.log('\n🔗 ===== LANGSMITH CHAIN START =====');
-    console.log('📋 Chain Steps:', steps.length);
-    console.log('🎯 App Name:', appName);
-    console.log('🎲 Should Trace:', this.shouldTrace());
-
     try {
-      // Execute each step (e.g., retrieval, prompt) and collect spans
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        console.log(`\n🔄 Executing Step ${i + 1}/${steps.length}: ${step.name || `step-${i + 1}`}`);
-        console.log('📝 Step Input:', JSON.stringify(step.params, null, 2));
-        
         const stepStart = Date.now();
-        let result;
-        
-        try {
-          result = await step.fn(step.params);  // Execute step (e.g., OpenAI call)
-          console.log('✅ Step completed successfully');
-          console.log('📊 Step Output:', JSON.stringify(result, null, 2));
-        } catch (error) {
-          console.error('❌ Step failed:', error.message);
-          throw error;
-        }
-        
+        const result = await step.fn(step.params);
         const latency = Date.now() - stepStart;
-        console.log('⏱️  Step Latency:', latency + 'ms');
 
         const span = {
           name: step.name || `step-${spans.length + 1}`,
@@ -167,14 +97,9 @@ class LangSmithSDK {
           tokens: step.tokens || undefined,
         };
         spans.push(span);
-        console.log('📦 Step Span:', JSON.stringify(span, null, 2));
       }
 
       if (this.shouldTrace()) {
-        console.log('\n📤 Sending chain trace to backend...');
-        console.log('🔗 Total Spans:', spans.length);
-        console.log('⏱️  Total Chain Latency:', Date.now() - startTime + 'ms');
-
         const payload = {
           appName,
           spans,
@@ -182,26 +107,22 @@ class LangSmithSDK {
           sessionId: this.sessionId,
         };
 
-        console.log('📋 Chain Payload:', JSON.stringify(payload, null, 2));
-
         const response = await this.sendTrace(payload);
         this.sessionId = response.data.sessionId || this.sessionId;
         
-        console.log('✅ Chain trace sent successfully!');
-        console.log('📨 Backend Response:', JSON.stringify(response.data, null, 2));
-        console.log('🏁 ===== LANGSMITH CHAIN END =====\n');
-        return { results: spans.map(s => s.output), traceId: response.data.traceId };
-      } else {
-        console.log('📊 Tracing disabled - skipping chain trace send');
-        console.log('🏁 ===== LANGSMITH CHAIN END =====\n');
-        return { results: spans.map(s => s.output), traceId: null };
+        return { 
+          results: spans.map(s => s.output), 
+          traceId: response.data.traceId 
+        };
       }
+
+      return { 
+        results: spans.map(s => s.output), 
+        traceId: null 
+      };
       
     } catch (err) {
-      console.error('❌ Chain execution failed:', err.message);
-      
       if (this.shouldTrace()) {
-        console.log('📤 Sending error trace...');
         await this.sendTrace({
           appName,
           spans: [...spans, {
@@ -215,36 +136,21 @@ class LangSmithSDK {
           sessionId: this.sessionId,
         });
       }
-      
-      console.log('🏁 ===== LANGSMITH CHAIN END =====\n');
       throw err;
     }
   }
 
-  // Helper to send trace
   async sendTrace(payload) {
     try {
-      console.log('📤 Sending trace to backend...');
-      console.log('🎯 Endpoint:', `${this.endpoint}/traces`);
-      console.log('🔑 API Key:', this.apiKey.substring(0, 10) + '...');
-      console.log('📋 Payload:', JSON.stringify(payload, null, 2));
-      
       const response = await axios.post(`${this.endpoint}/traces`, payload, {
         headers: { 'X-API-Key': this.apiKey },
       });
-      
-      console.log('✅ Trace sent successfully!');
-      console.log('📨 Backend Response:', JSON.stringify(response.data, null, 2));
       return response;
-      
     } catch (err) {
-      console.warn('⚠️ Failed to send trace:', err.message);
-      console.error('🔍 Trace Error Details:', err.response?.data || err);
-      return { data: {} }; // Don't block app
+      console.warn('Failed to send trace:', err.message);
+      return { data: {} };
     }
   }
-
-  // Extend for other methods (e.g., completions.create) similarly
 }
 
-module.exports = LangSmithSDK;
+module.exports = Kyra;

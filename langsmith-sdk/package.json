@@ -1,12 +1,13 @@
 {
-  "name": "langsmith-sdk",
+  "name": "kyra",
   "version": "0.1.0",
-  "description": "LangSmith SDK for tracing LLM calls and multi-step chains with OpenAI integration",
+  "description": "Kyra - LLM tracing SDK for monitoring calls and multi-step chains with OpenAI integration",
   "main": "lib/index.js",
   "scripts": {
     "test": "node test/example.js"
   },
   "keywords": [
+    "kyra",
     "langsmith",
     "openai",
     "llm",
@@ -20,7 +21,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/langsmith-sdk"
+    "url": "https://github.com/karthiknadar1204/kyra"
   },
   "engines": {
     "node": ">=14.0.0"
