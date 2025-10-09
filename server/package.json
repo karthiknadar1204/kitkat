@@ -7,6 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
+    "start": "node index.js",
+    "build": "drizzle-kit generate && drizzle-kit push && echo 'Build successful - Express backend ready'",
     "init-mongodb": "node scripts/init-mongodb.js"
   },
   "keywords": [],
