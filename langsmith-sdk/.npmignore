@@ -1,0 +1,10 @@
+node_modules/
+test/
+.env
+.env.*
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.tgz
+
