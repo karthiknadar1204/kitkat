@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.route.js'
 import sessionsRoutes from './routes/sessions.route.js'
 import tracesRoutes from './routes/traces.route.js'
 import apiKeysRoutes from './routes/apiKeys.route.js'
+import { db } from './config/db.js'
 
 // dotenv.config()
 (async () => {
@@ -30,6 +31,42 @@ app.use(cors({
     credentials:true
 }))
 app.use(bodyParser.json())
+
+// Health check endpoint
+app.get("/health", async (req, res) => {
+  try {
+    const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    
+    let postgresStatus = 'disconnected';
+    try {
+      await db.execute('SELECT 1');
+      postgresStatus = 'connected';
+    } catch (err) {
+      postgresStatus = 'error';
+    }
+    
+    const isHealthy = mongoStatus === 'connected' && postgresStatus === 'connected';
+    
+    res.status(isHealthy ? 200 : 503).json({
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString(),
+      services: {
+        mongodb: mongoStatus,
+        postgresql: postgresStatus,
+        server: 'running'
+      },
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
+});
+
 app.use("/api/auth",authRoutes)
 app.use("/api/sessions",sessionsRoutes)
 app.use("/api/traces",tracesRoutes)
