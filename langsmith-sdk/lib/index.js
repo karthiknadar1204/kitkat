@@ -7,7 +7,7 @@ class Kyra {
   constructor(options = {}) {
     const {
       apiKey = process.env.LANGSMITH_API_KEY,
-      endpoint = process.env.LANGSMITH_ENDPOINT || 'http://localhost:3002/api',
+      endpoint = process.env.LANGSMITH_ENDPOINT || 'https://kitkat-production.up.railway.app/api',
       project = process.env.LANGSMITH_PROJECT || 'default',
       tracingEnabled = process.env.LANGSMITH_TRACING !== 'false',
     } = options;
