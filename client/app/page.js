@@ -1,38 +1,22 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Activity, BarChart3, Bug, Zap, Shield, Code2, ArrowRight, Sparkles } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import { useAuthStore } from "@/lib/authStore";
 
 export default function Home() {
+  const { isAuthenticated } = useAuthStore();
+  const ctaLink = isAuthenticated ? "/dashboard" : "/sign-up";
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-effect">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="heading-sm">Kyra</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="/sign-in">
-                <Button variant="ghost" className="text-foreground hover:text-primary">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button className="bg-primary hover:bg-primary/90">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
@@ -55,9 +39,9 @@ export default function Home() {
             </p>
             
             <div className="flex items-center justify-center gap-4 pt-4">
-              <Link href="/sign-up">
+              <Link href={ctaLink}>
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-6">
-                  Start Free Trial
+                  {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
@@ -173,9 +157,9 @@ const response = await openai.chat.completions.create({
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/sign-up">
+              <Link href={ctaLink}>
                 <Button size="lg" className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
-                  Create Free Account
+                  {isAuthenticated ? "Go to Dashboard" : "Create Free Account"}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
