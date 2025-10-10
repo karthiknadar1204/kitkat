@@ -27,8 +27,10 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({extended:true}))
 app.use(cors({
-    origin:process.env.FRONTEND_URL,
-    credentials:true
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }))
 app.use(bodyParser.json())
 
