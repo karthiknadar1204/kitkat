@@ -10,13 +10,27 @@ export const ingestTrace = async (req, res) => {
   const { id: userId } = req.user;
 
   let finalSessionId = sessionId;
+  
   if (!sessionId) {
-
-    const [newSession] = await db.insert(sessions).values({ userId, appName }).returning();
-    finalSessionId = newSession.id;
-    console.log(`Auto-created session ${finalSessionId} for user ${userId}`);
+    // Look for existing session with this appName for this user
+    const existingSessions = await db.select()
+      .from(sessions)
+      .where(eq(sessions.userId, userId));
+    
+    const matchingSession = existingSessions.find(s => s.appName === appName);
+    
+    if (matchingSession) {
+      // Reuse existing session for this project
+      finalSessionId = matchingSession.id;
+      console.log(`Using existing session ${finalSessionId} for project "${appName}"`);
+    } else {
+      // Create new session only if no session exists for this project
+      const [newSession] = await db.insert(sessions).values({ userId, appName }).returning();
+      finalSessionId = newSession.id;
+      console.log(`Created new session ${finalSessionId} for new project "${appName}"`);
+    }
   } else {
-
+    // Verify provided sessionId belongs to user
     const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId));
     if (!session || session.userId !== userId) {
       return res.status(404).json({ error: 'Invalid session' });

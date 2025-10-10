@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-const API_BASE_URL = 'https://kitkat-production.up.railway.app/api';
+const API_BASE_URL = 'http://localhost:3002/api';
 
 export const useAuthStore = create(
   persist(
@@ -11,6 +11,11 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      _hasHydrated: false,
+      
+      setHasHydrated: (state) => {
+        set({ _hasHydrated: state });
+      },
 
       register: async (name, email, password) => {
         set({ isLoading: true, error: null });
@@ -93,6 +98,9 @@ export const useAuthStore = create(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

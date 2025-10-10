@@ -1,0 +1,21 @@
+{
+  "name": "test-integration",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "kyra": "file:../langsmith-sdk/kyra-0.1.0.tgz",
+    "openai": "^6.3.0",
+    "uuid": "^13.0.0"
+  }
+}
