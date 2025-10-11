@@ -8,33 +8,35 @@ import { processTraceStats } from '../services/statsWorker.js';
 export const ingestTrace = async (req, res) => {
   const { sessionId, appName, spans, metadata = {} } = req.body;
   const { id: userId } = req.user;
+  const apiKeySessionId = req.apiKeySession; // Session ID from the API key
 
   let finalSessionId = sessionId;
   
+  // Validate API key is bound to a session
+  if (!apiKeySessionId) {
+    return res.status(403).json({ 
+      error: 'API key not bound to a project. Please generate a new API key from your dashboard.' 
+    });
+  }
+  
   if (!sessionId) {
-    // Look for existing session with this appName for this user
-    const existingSessions = await db.select()
-      .from(sessions)
-      .where(eq(sessions.userId, userId));
-    
-    const matchingSession = existingSessions.find(s => s.appName === appName);
-    
-    if (matchingSession) {
-      // Reuse existing session for this project
-      finalSessionId = matchingSession.id;
-      console.log(`Using existing session ${finalSessionId} for project "${appName}"`);
-    } else {
-      // Create new session only if no session exists for this project
-      const [newSession] = await db.insert(sessions).values({ userId, appName }).returning();
-      finalSessionId = newSession.id;
-      console.log(`Created new session ${finalSessionId} for new project "${appName}"`);
-    }
+    // If no sessionId provided, use the one from API key
+    finalSessionId = apiKeySessionId;
+    console.log(`Using API key's bound session ${finalSessionId}`);
   } else {
-    // Verify provided sessionId belongs to user
-    const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId));
-    if (!session || session.userId !== userId) {
-      return res.status(404).json({ error: 'Invalid session' });
+    // If sessionId provided, validate it matches the API key's session
+    if (sessionId !== apiKeySessionId) {
+      return res.status(403).json({ 
+        error: `API key is bound to a different project. This key can only be used for session ${apiKeySessionId}.` 
+      });
     }
+    finalSessionId = sessionId;
+  }
+  
+  // Verify session exists and belongs to user
+  const [session] = await db.select().from(sessions).where(eq(sessions.id, finalSessionId));
+  if (!session || session.userId !== userId) {
+    return res.status(404).json({ error: 'Invalid session or access denied' });
   }
 
   const traceId = uuidv4();

@@ -1,0 +1,2 @@
+ALTER TABLE "api_keys" ADD COLUMN "session_id" integer NOT NULL;--> statement-breakpoint
+ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_session_id_sessions_id_fk" FOREIGN KEY ("session_id") REFERENCES "public"."sessions"("id") ON DELETE no action ON UPDATE no action;

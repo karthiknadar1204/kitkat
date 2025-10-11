@@ -10,5 +10,6 @@ export const verifyApiKey = async (req, res, next) => {
   if (!keyRecord) return res.status(403).json({ error: 'Invalid API key' });
 
   req.user = { id: keyRecord.userId };
+  req.apiKeySession = keyRecord.sessionId; // Attach session ID from API key
   next();
 };

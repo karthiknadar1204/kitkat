@@ -1,5 +1,16 @@
 const API_BASE_URL = 'http://localhost:3002/api';
 
+const handleAuthError = (response) => {
+  if (response.status === 401 || response.status === 403) {
+    // Clear auth and redirect to sign-in
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth-storage');
+      window.location.href = '/sign-in';
+    }
+    throw new Error('SESSION_EXPIRED');
+  }
+};
+
 export const dashboardApi = {
   async getTraces(sessionId) {
     try {
@@ -10,6 +21,8 @@ export const dashboardApi = {
           'Content-Type': 'application/json',
         },
       });
+
+      handleAuthError(response);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -34,6 +47,8 @@ export const dashboardApi = {
           'Content-Type': 'application/json',
         },
       });
+
+      handleAuthError(response);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -61,6 +76,8 @@ export const dashboardApi = {
           },
         }
       );
+
+      handleAuthError(response);
 
       if (!response.ok) {
         const errorText = await response.text();

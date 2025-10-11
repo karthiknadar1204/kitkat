@@ -1,15 +1,28 @@
 const API_BASE_URL = 'http://localhost:3002/api';
 
+const handleAuthError = (response) => {
+  if (response.status === 401 || response.status === 403) {
+    // Clear auth and redirect to sign-in
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth-storage');
+      window.location.href = '/sign-in';
+    }
+    throw new Error('SESSION_EXPIRED');
+  }
+};
+
 export const apiKeysApi = {
-  async createApiKey(name) {
+  async createApiKey(name, sessionId) {
     const response = await fetch(`${API_BASE_URL}/api-keys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, sessionId }),
     });
+
+    handleAuthError(response);
 
     const data = await response.json();
 
@@ -20,11 +33,17 @@ export const apiKeysApi = {
     return data;
   },
 
-  async getApiKeys() {
-    const response = await fetch(`${API_BASE_URL}/api-keys`, {
+  async getApiKeys(sessionId) {
+    const url = sessionId 
+      ? `${API_BASE_URL}/api-keys?sessionId=${sessionId}`
+      : `${API_BASE_URL}/api-keys`;
+    
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include',
     });
+
+    handleAuthError(response);
 
     const data = await response.json();
 

@@ -27,6 +27,7 @@ export const stats = pgTable('stats', {
 export const apiKeys = pgTable('api_keys', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull(),
+  sessionId: integer('session_id').references(() => sessions.id), // Nullable for now
   key: varchar('key', { length: 255 }).unique().notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
