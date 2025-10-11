@@ -10,6 +10,9 @@ import Navbar from "@/components/Navbar";
 import { useAuthStore } from "@/lib/authStore";
 import { apiKeysApi } from "@/lib/api/apiKeys";
 import { dashboardApi } from "@/lib/api/dashboard";
+import TokenDistributionChart from "@/components/charts/TokenDistributionChart";
+import SuccessErrorChart from "@/components/charts/SuccessErrorChart";
+import ToolBreakdownChart from "@/components/charts/ToolBreakdownChart";
 
 export default function ProjectDetailPage() {
   const router = useRouter();
@@ -31,8 +34,13 @@ export default function ProjectDetailPage() {
     avgTokensPerTrace: 0,
     avgInputTokensPerTrace: 0,
     avgOutputTokensPerTrace: 0,
+    inputTokensPerTraceP50: 0,
+    inputTokensPerTraceP99: 0,
+    outputTokensPerTraceP50: 0,
+    outputTokensPerTraceP99: 0,
     totalCost: 0,
     medianCostPerTrace: 0,
+    p99CostPerTrace: 0,
     avgTraceLatency: 0,
     traceP50Latency: 0,
     traceP99Latency: 0,
@@ -40,6 +48,8 @@ export default function ProjectDetailPage() {
     avgLLMLatency: 0,
     llmP50Latency: 0,
     llmP99Latency: 0,
+    toolBreakdown: [],
+    runTypeBreakdown: [],
     // Legacy
     avgLatency: 0,
     p50Latency: 0,
@@ -92,6 +102,7 @@ export default function ProjectDetailPage() {
   const fetchStats = async () => {
     try {
       const data = await dashboardApi.getStats(sessionId);
+      console.log('Fetched stats:', data); // Debug log
       setStats(data);
     } catch (err) {
       console.error('Error fetching stats:', err);
@@ -158,10 +169,36 @@ export default function ProjectDetailPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Projects
           </Button>
-          <h1 className="heading-lg mb-2">{projectName}</h1>
-          <p className="body-md text-muted-foreground">
-            Session ID: {sessionId}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="heading-lg mb-2">{projectName}</h1>
+              <p className="body-md text-muted-foreground">
+                Session ID: {sessionId}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="border-primary/50 hover:bg-primary/10"
+              onClick={async () => {
+                try {
+                  const response = await fetch(`http://localhost:3002/api/dashboard/snapshot/${sessionId}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                  });
+                  if (response.ok) {
+                    alert('✅ Snapshot created! Refresh to see graphs.');
+                    await fetchTimeSeries();
+                  } else {
+                    alert('❌ Failed to create snapshot');
+                  }
+                } catch (err) {
+                  alert('❌ Error: ' + err.message);
+                }
+              }}
+            >
+              Generate Snapshot (Test)
+            </Button>
+          </div>
         </div>
 
         {/* Stats Overview - Top Row */}
@@ -257,8 +294,8 @@ export default function ProjectDetailPage() {
           </Card>
         </div>
 
-        {/* Token Metrics */}
-        <div className="grid md:grid-cols-4 gap-4 mb-4">
+        {/* Token Metrics - Totals */}
+        <div className="grid md:grid-cols-3 gap-4 mb-4">
           <Card className="glass-effect border-border">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-2">
@@ -284,11 +321,72 @@ export default function ProjectDetailPage() {
           <Card className="glass-effect border-border">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-2">
-                <Zap className="w-5 h-5 text-orange-500" />
-                <Badge variant="outline" className="text-xs">Per Trace</Badge>
+                <Zap className="w-5 h-5 text-purple-500" />
+                <Badge variant="outline" className="text-xs">Total</Badge>
               </div>
-              <div className="heading-md mb-1">{stats.avgTokensPerTrace}</div>
-              <p className="body-sm text-muted-foreground">Avg Tokens/Trace</p>
+              <div className="heading-md mb-1">{stats.totalTokens.toLocaleString()}</div>
+              <p className="body-sm text-muted-foreground">Total Tokens</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Token Metrics - Per Trace Percentiles */}
+        <div className="grid md:grid-cols-4 gap-4 mb-4">
+          <Card className="glass-effect border-border">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Zap className="w-5 h-5 text-green-500" />
+                <Badge variant="outline" className="text-xs">Input P50</Badge>
+              </div>
+              <div className="heading-md mb-1">{stats.inputTokensPerTraceP50}</div>
+              <p className="body-sm text-muted-foreground">Input Tokens/Trace</p>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-effect border-border">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Zap className="w-5 h-5 text-green-500" />
+                <Badge variant="outline" className="text-xs">Input P99</Badge>
+              </div>
+              <div className="heading-md mb-1">{stats.inputTokensPerTraceP99}</div>
+              <p className="body-sm text-muted-foreground">Input Tokens/Trace</p>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-effect border-border">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Zap className="w-5 h-5 text-blue-500" />
+                <Badge variant="outline" className="text-xs">Output P50</Badge>
+              </div>
+              <div className="heading-md mb-1">{stats.outputTokensPerTraceP50}</div>
+              <p className="body-sm text-muted-foreground">Output Tokens/Trace</p>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-effect border-border">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Zap className="w-5 h-5 text-blue-500" />
+                <Badge variant="outline" className="text-xs">Output P99</Badge>
+              </div>
+              <div className="heading-md mb-1">{stats.outputTokensPerTraceP99}</div>
+              <p className="body-sm text-muted-foreground">Output Tokens/Trace</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Cost Metrics */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Card className="glass-effect border-border">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <DollarSign className="w-5 h-5 text-green-500" />
+                <Badge variant="outline" className="text-xs">P50</Badge>
+              </div>
+              <div className="heading-md mb-1">${stats.medianCostPerTrace.toFixed(4)}</div>
+              <p className="body-sm text-muted-foreground">Median Cost/Trace</p>
             </CardContent>
           </Card>
 
@@ -296,13 +394,124 @@ export default function ProjectDetailPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-2">
                 <DollarSign className="w-5 h-5 text-green-500" />
-                <Badge variant="outline" className="text-xs">Median</Badge>
+                <Badge variant="outline" className="text-xs">P99</Badge>
               </div>
-              <div className="heading-md mb-1">${stats.medianCostPerTrace.toFixed(4)}</div>
-              <p className="body-sm text-muted-foreground">Cost Per Trace</p>
+              <div className="heading-md mb-1">${stats.p99CostPerTrace.toFixed(4)}</div>
+              <p className="body-sm text-muted-foreground">P99 Cost/Trace</p>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-effect border-border">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <DollarSign className="w-5 h-5 text-green-500" />
+                <Badge variant="outline" className="text-xs">Total</Badge>
+              </div>
+              <div className="heading-md mb-1">${((stats.totalCost || 0) / 100).toFixed(2)}</div>
+              <p className="body-sm text-muted-foreground">Total Cost</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Tool Breakdown */}
+        {stats.toolBreakdown && stats.toolBreakdown.length > 0 && (
+          <Card className="glass-effect border-border mb-8">
+            <CardHeader>
+              <CardTitle className="heading-md">Tool Breakdown</CardTitle>
+              <CardDescription className="body-sm">
+                Performance metrics by tool
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {stats.toolBreakdown.map((tool, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="body-md font-medium">{tool.name}</p>
+                      <p className="body-sm text-muted-foreground">{tool.count} calls</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="body-sm">{tool.medianLatency}ms</p>
+                        <p className="body-xs text-muted-foreground">Median Latency</p>
+                      </div>
+                      <Badge variant={tool.errorRate > 0 ? "destructive" : "secondary"}>
+                        {tool.errorRate}% errors
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Run Type Breakdown */}
+        {stats.runTypeBreakdown && stats.runTypeBreakdown.length > 0 && (
+          <Card className="glass-effect border-border mb-8">
+            <CardHeader>
+              <CardTitle className="heading-md">Run Types (by Depth)</CardTitle>
+              <CardDescription className="body-sm">
+                Performance metrics by run name and depth level
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {stats.runTypeBreakdown.slice(0, 10).map((run, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="body-md font-medium">{run.name}</p>
+                      <p className="body-sm text-muted-foreground">
+                        Depth {run.depth} • {run.count} runs
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="body-sm">{run.medianLatency}ms</p>
+                        <p className="body-xs text-muted-foreground">Median Latency</p>
+                      </div>
+                      <Badge variant={run.errorRate > 0 ? "destructive" : "secondary"}>
+                        {run.errorRate}% errors
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Analytics Charts */}
+        {stats.runCount > 0 && (
+          <div className="mb-8">
+            <h2 className="heading-md mb-4">Analytics Overview</h2>
+            
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <TokenDistributionChart 
+                inputTokens={stats.totalInputTokens || 0}
+                outputTokens={stats.totalOutputTokens || 0}
+                title="Token Distribution"
+                description="Breakdown of input vs output tokens"
+              />
+              <SuccessErrorChart 
+                successCount={stats.successCount || 0}
+                errorCount={stats.errorCount || 0}
+                title="Success vs Errors"
+                description="Run status distribution"
+              />
+            </div>
+            
+            {stats.toolBreakdown && stats.toolBreakdown.length > 0 && (
+              <div className="mb-6">
+                <ToolBreakdownChart 
+                  toolBreakdown={stats.toolBreakdown}
+                  title="Tool Usage"
+                  description="Distribution of tool calls"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* API Keys Section */}
         <Card className="glass-effect border-border mb-8">

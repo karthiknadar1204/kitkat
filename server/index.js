@@ -30,6 +30,10 @@ const connectMongoDB = async (retries = 5) => {
       await mongoose.connect(process.env.MONGODB_DATABASE_URL, options);
       console.log('✅ MongoDB connected successfully');
       
+      // Start snapshot worker immediately after connection
+      const { startSnapshotWorker } = await import('./services/snapshotWorker.js');
+      startSnapshotWorker();
+      
       // Handle connection events
       mongoose.connection.on('disconnected', () => {
         console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
@@ -113,6 +117,7 @@ app.use("/api/sessions",sessionsRoutes)
 app.use("/api/traces",tracesRoutes)
 app.use("/api/api-keys",apiKeysRoutes)
 app.use("/api/dashboard",dashboardRoutes)
+
 app.listen(3002,()=>{
-    console.log("server is running on port 3002")  
+    console.log("server is running on port 3002")
 })
