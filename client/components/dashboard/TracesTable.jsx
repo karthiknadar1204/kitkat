@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Clock, Zap, Key } from 'lucide-react';
+import { Activity, Clock, Zap, ChevronRight } from 'lucide-react';
 
-export default function TracesTable({ traces, tracesLoading, apiKeysCount }) {
-  const [expandedTrace, setExpandedTrace] = useState(null);
+export default function TracesTable({ traces, tracesLoading, apiKeysCount, onTraceClick }) {
 
   const getTraceType = (trace) => {
     if (!trace.spans || trace.spans.length === 0) return 'unknown';
@@ -116,10 +114,11 @@ export default function TracesTable({ traces, tracesLoading, apiKeysCount }) {
             <div className="grid grid-cols-12 gap-4 body-sm font-medium text-muted-foreground">
               <div className="col-span-2">ID</div>
               <div className="col-span-2">Type</div>
-              <div className="col-span-3">Name</div>
+              <div className="col-span-2">Name</div>
               <div className="col-span-2 text-right">Latency</div>
               <div className="col-span-2 text-right">Tokens</div>
               <div className="col-span-1 text-center">Status</div>
+              <div className="col-span-1"></div>
             </div>
           </div>
 
@@ -127,20 +126,17 @@ export default function TracesTable({ traces, tracesLoading, apiKeysCount }) {
           <div className="border-x border-b border-border rounded-b-lg">
             {traces.map((trace, idx) => {
               const type = getTraceType(trace);
-              const isExpanded = expandedTrace === trace.traceId;
               const totalTokens = getTotalTokens(trace);
               const totalLatency = getTotalLatency(trace);
 
               return (
                 <div
                   key={trace.traceId}
-                  className={`${idx !== 0 ? 'border-t border-border' : ''} hover:bg-muted/20 transition-colors`}
+                  className={`${idx !== 0 ? 'border-t border-border' : ''} hover:bg-muted/30 transition-colors cursor-pointer group`}
+                  onClick={() => onTraceClick && onTraceClick(trace)}
                 >
                   {/* Table Row */}
-                  <div
-                    className="grid grid-cols-12 gap-4 px-4 py-4 cursor-pointer items-center"
-                    onClick={() => setExpandedTrace(isExpanded ? null : trace.traceId)}
-                  >
+                  <div className="grid grid-cols-12 gap-4 px-4 py-4 items-center">
                     <div className="col-span-2">
                       <span className="body-sm font-mono text-muted-foreground">
                         {trace.traceId.substring(0, 8)}
@@ -153,7 +149,7 @@ export default function TracesTable({ traces, tracesLoading, apiKeysCount }) {
                       </Badge>
                     </div>
                     
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <p className="body-sm text-foreground truncate">
                         {trace.spans[0]?.name || 'Unknown'}
                       </p>
@@ -181,53 +177,11 @@ export default function TracesTable({ traces, tracesLoading, apiKeysCount }) {
                         ✓
                       </Badge>
                     </div>
-                  </div>
 
-                  {/* Expanded Details (full width) */}
-                  {isExpanded && (
-                    <div className="border-t border-border bg-muted/10 p-6 space-y-4">
-                      {trace.spans.map((span, idx) => (
-                        <div key={idx} className="bg-muted/30 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="body-md font-medium">{span.name}</h4>
-                            <div className="flex items-center gap-4 text-sm">
-                              <span className="text-muted-foreground">{span.latency}ms</span>
-                              {span.tokens && (
-                                <span className="text-muted-foreground">
-                                  {span.tokens.input + span.tokens.output} tokens
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-3">
-                            <div>
-                              <p className="body-sm font-medium text-muted-foreground mb-1">Input:</p>
-                              <pre className="bg-background rounded p-3 text-xs overflow-x-auto">
-                                {JSON.stringify(span.input, null, 2)}
-                              </pre>
-                            </div>
-                            
-                            <div>
-                              <p className="body-sm font-medium text-muted-foreground mb-1">Output:</p>
-                              <pre className="bg-background rounded p-3 text-xs overflow-x-auto">
-                                {JSON.stringify(span.output, null, 2)}
-                              </pre>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {trace.metadata && Object.keys(trace.metadata).length > 0 && (
-                        <div className="bg-muted/30 rounded-lg p-4">
-                          <p className="body-sm font-medium text-muted-foreground mb-2">Metadata:</p>
-                          <pre className="bg-background rounded p-3 text-xs overflow-x-auto">
-                            {JSON.stringify(trace.metadata, null, 2)}
-                          </pre>
-                        </div>
-                      )}
+                    <div className="col-span-1 text-right">
+                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}

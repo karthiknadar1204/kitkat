@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BarChart3, Activity } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuthStore } from "@/lib/authStore";
 import { apiKeysApi } from "@/lib/api/apiKeys";
@@ -16,6 +16,7 @@ import PrimaryMetrics from "@/components/dashboard/PrimaryMetrics";
 import AdvancedMetrics from "@/components/dashboard/AdvancedMetrics";
 import ApiKeySidebar from "@/components/dashboard/ApiKeySidebar";
 import TracesTable from "@/components/dashboard/TracesTable";
+import TraceDetailSidebar from "@/components/dashboard/TraceDetailSidebar";
 
 export default function ProjectDetailPage() {
   const router = useRouter();
@@ -32,6 +33,9 @@ export default function ProjectDetailPage() {
   const [onboardingStep, setOnboardingStep] = useState('welcome');
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
   const [showApiKeySidebar, setShowApiKeySidebar] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedTrace, setSelectedTrace] = useState(null);
+  const [showTraceDetailSidebar, setShowTraceDetailSidebar] = useState(false);
   const [stats, setStats] = useState({ 
     runCount: 0,
     errorRate: 0,
@@ -139,6 +143,16 @@ export default function ProjectDetailPage() {
     setNewApiKey(null);
   };
 
+  const handleTraceClick = (trace) => {
+    setSelectedTrace(trace);
+    setShowTraceDetailSidebar(true);
+  };
+
+  const handleCloseTraceSidebar = () => {
+    setShowTraceDetailSidebar(false);
+    setSelectedTrace(null);
+  };
+
   const copyToClipboard = (text, key) => {
     navigator.clipboard.writeText(text);
     setCopied({ ...copied, [key]: true });
@@ -199,61 +213,114 @@ export default function ProjectDetailPage() {
                 Session ID: {sessionId}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowAdvancedMetrics(!showAdvancedMetrics)}
-              >
-                {showAdvancedMetrics ? 'Hide' : 'Show'} Advanced Metrics
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Primary Metrics */}
-        <PrimaryMetrics stats={stats} />
-
-        {/* Analytics Charts */}
-        {stats.runCount > 0 && (
-          <div className="mb-8">
-            <h2 className="heading-md mb-4">Analytics Overview</h2>
-            
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <TokenDistributionChart 
-                inputTokens={stats.totalInputTokens || 0}
-                outputTokens={stats.totalOutputTokens || 0}
-                title="Token Distribution"
-                description="Breakdown of input vs output tokens"
-              />
-              <SuccessErrorChart 
-                successCount={stats.successCount || 0}
-                errorCount={stats.errorCount || 0}
-                title="Success vs Errors"
-                description="Run status distribution"
-              />
-            </div>
-            
-            {stats.toolBreakdown && stats.toolBreakdown.length > 0 && (
-              <div className="mb-6">
-                <ToolBreakdownChart 
-                  toolBreakdown={stats.toolBreakdown}
-                  title="Tool Usage"
-                  description="Distribution of tool calls"
-                />
+            {activeTab === 'overview' && (
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAdvancedMetrics(!showAdvancedMetrics)}
+                >
+                  {showAdvancedMetrics ? 'Hide' : 'Show'} Advanced Metrics
+                </Button>
               </div>
             )}
           </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-8 border-b border-border">
+          <div className="flex gap-6">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`pb-4 px-2 body-md font-medium transition-colors relative ${
+                activeTab === 'overview'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Overview
+              </div>
+              {activeTab === 'overview' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></div>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('traces')}
+              className={`pb-4 px-2 body-md font-medium transition-colors relative ${
+                activeTab === 'traces'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Traces
+                {traces.length > 0 && (
+                  <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                    {traces.length}
+                  </span>
+                )}
+              </div>
+              {activeTab === 'traces' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Overview Tab Content */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Primary Metrics */}
+            <PrimaryMetrics stats={stats} />
+
+            {/* Analytics Charts */}
+            {stats.runCount > 0 && (
+              <div className="mb-8">
+                <h2 className="heading-md mb-4">Analytics Overview</h2>
+                
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <TokenDistributionChart 
+                    inputTokens={stats.totalInputTokens || 0}
+                    outputTokens={stats.totalOutputTokens || 0}
+                    title="Token Distribution"
+                    description="Breakdown of input vs output tokens"
+                  />
+                  <SuccessErrorChart 
+                    successCount={stats.successCount || 0}
+                    errorCount={stats.errorCount || 0}
+                    title="Success vs Errors"
+                    description="Run status distribution"
+                  />
+                </div>
+                
+                {stats.toolBreakdown && stats.toolBreakdown.length > 0 && (
+                  <div className="mb-6">
+                    <ToolBreakdownChart 
+                      toolBreakdown={stats.toolBreakdown}
+                      title="Tool Usage"
+                      description="Distribution of tool calls"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Advanced Metrics (Collapsible) */}
+            {showAdvancedMetrics && <AdvancedMetrics stats={stats} />}
+          </>
         )}
 
-        {/* Advanced Metrics (Collapsible) */}
-        {showAdvancedMetrics && <AdvancedMetrics stats={stats} />}
-
-        {/* Traces Table */}
-        <TracesTable
-          traces={traces}
-          tracesLoading={tracesLoading}
-          apiKeysCount={apiKeys.length}
-        />
+        {/* Traces Tab Content */}
+        {activeTab === 'traces' && (
+          <TracesTable
+            traces={traces}
+            tracesLoading={tracesLoading}
+            apiKeysCount={apiKeys.length}
+            onTraceClick={handleTraceClick}
+          />
+        )}
       </div>
 
       {/* API Key Sidebar */}
@@ -264,6 +331,13 @@ export default function ProjectDetailPage() {
         onConfirm={handleConfirmApiKey}
         copyToClipboard={copyToClipboard}
         copied={copied}
+      />
+
+      {/* Trace Detail Sidebar */}
+      <TraceDetailSidebar
+        isOpen={showTraceDetailSidebar}
+        trace={selectedTrace}
+        onClose={handleCloseTraceSidebar}
       />
     </div>
   );
