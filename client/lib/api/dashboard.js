@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3002/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const handleAuthError = (response) => {
   if (response.status === 401 || response.status === 403) {
