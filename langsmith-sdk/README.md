@@ -185,43 +185,6 @@ Manually create a session (optional, auto-created by default).
 
 **Returns:** Session ID (number) or null if tracing disabled
 
-## Production Usage
-
-### Sampling for High-Volume Applications
-
-### Disable Tracing in Production
-
-```bash
-KYRA_TRACING=false
-```
-
-### Non-blocking Behavior
-
-Tracing failures never crash your application. If the backend is unavailable, traces are silently dropped with console warnings.
-
-## Architecture
-
-```
-┌──────────────┐
-│  Your App    │
-└──────┬───────┘
-       │
-       │ SDK Wrapper
-       ▼
-┌──────────────┐     Traces      ┌──────────────┐
-│   OpenAI     │ ◄────────────► │     Kyra     │
-│     API      │                 │   Backend    │
-└──────────────┘                 └──────────────┘
-                                        │
-                         ┌──────────────┴──────────────┐
-                         │                             │
-                         ▼                             ▼
-                  ┌─────────────┐            ┌─────────────┐
-                  │  MongoDB    │            │  PostgreSQL │
-                  │  (Traces)   │            │   (Stats)   │
-                  └─────────────┘            └─────────────┘
-```
-
 ## Examples
 
 ### Stream Responses (Coming Soon)
@@ -264,10 +227,6 @@ await sdk.addFeedback(traceId, {
 ## License
 
 MIT
-
-## Contributing
-
-Contributions welcome! Please open an issue or PR.
 
 ## Support
 
