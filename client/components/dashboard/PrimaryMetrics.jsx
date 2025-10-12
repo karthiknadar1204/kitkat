@@ -48,7 +48,7 @@ export default function PrimaryMetrics({ stats }) {
               {stats.errorRate}%
             </Badge>
           </div>
-          <div className="heading-xl mb-1">${((stats.totalCost || 0) / 100).toFixed(2)}</div>
+          <div className="text-2xl font-bold mb-1 break-all leading-tight">${(stats.totalCost || 0).toFixed(6)}</div>
           <p className="body-sm text-muted-foreground">Total Cost</p>
         </CardContent>
       </Card>

@@ -150,8 +150,8 @@ export const getDashboardStats = async (req, res) => {
       traceOutputTokensList.push(traceOutputTokens);
     });
     
-    // Calculate total cost
-    totalCost = Math.round(traceCosts.reduce((sum, c) => sum + c, 0) * 100); // in cents
+    // Calculate total cost (keep in dollars, don't round to cents)
+    totalCost = traceCosts.reduce((sum, c) => sum + c, 0);
     
     // Calculate trace latency percentiles
     const sortedTraceLatencies = traceLatencies.sort((a, b) => a - b);
@@ -252,10 +252,10 @@ export const getDashboardStats = async (req, res) => {
       outputTokensPerTraceP50: outputTokensP50,
       outputTokensPerTraceP99: outputTokensP99,
       
-      // Cost metrics
-      totalCost,
-      medianCostPerTrace: Math.round(medianCostPerTrace * 10000) / 10000, // 4 decimal places
-      p99CostPerTrace: Math.round(p99CostPerTrace * 10000) / 10000,
+      // Cost metrics (in dollars)
+      totalCost: Math.round(totalCost * 1000000) / 1000000, // 6 decimal places for micro-costs
+      medianCostPerTrace: Math.round(medianCostPerTrace * 1000000) / 1000000, // 6 decimal places
+      p99CostPerTrace: Math.round(p99CostPerTrace * 1000000) / 1000000, // 6 decimal places
       
       // Trace latency metrics
       avgTraceLatency,

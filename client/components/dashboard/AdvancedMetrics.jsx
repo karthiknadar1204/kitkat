@@ -74,7 +74,7 @@ export default function AdvancedMetrics({ stats }) {
                 <Clock className="w-5 h-5 text-orange-500" />
                 <Badge variant="outline" className="text-xs">Avg</Badge>
               </div>
-              <div className="heading-md mb-1">{stats.traceAvgLatency}ms</div>
+              <div className="heading-md mb-1">{stats.avgTraceLatency}ms</div>
               <p className="body-sm text-muted-foreground">Avg Trace Latency</p>
             </CardContent>
           </Card>
@@ -85,7 +85,7 @@ export default function AdvancedMetrics({ stats }) {
                 <Clock className="w-5 h-5 text-orange-500" />
                 <Badge variant="outline" className="text-xs">Avg</Badge>
               </div>
-              <div className="heading-md mb-1">{stats.llmAvgLatency}ms</div>
+              <div className="heading-md mb-1">{stats.avgLLMLatency}ms</div>
               <p className="body-sm text-muted-foreground">Avg LLM Latency</p>
             </CardContent>
           </Card>
@@ -174,7 +174,7 @@ export default function AdvancedMetrics({ stats }) {
                 <DollarSign className="w-5 h-5 text-green-500" />
                 <Badge variant="outline" className="text-xs">P50</Badge>
               </div>
-              <div className="heading-md mb-1">${stats.medianCostPerTrace.toFixed(4)}</div>
+              <div className="text-lg font-bold mb-1 break-all leading-tight">${stats.medianCostPerTrace.toFixed(6)}</div>
               <p className="body-sm text-muted-foreground">Median Cost/Trace</p>
             </CardContent>
           </Card>
@@ -185,7 +185,7 @@ export default function AdvancedMetrics({ stats }) {
                 <DollarSign className="w-5 h-5 text-green-500" />
                 <Badge variant="outline" className="text-xs">P99</Badge>
               </div>
-              <div className="heading-md mb-1">${stats.p99CostPerTrace.toFixed(4)}</div>
+              <div className="text-lg font-bold mb-1 break-all leading-tight">${stats.p99CostPerTrace.toFixed(6)}</div>
               <p className="body-sm text-muted-foreground">P99 Cost/Trace</p>
             </CardContent>
           </Card>
@@ -196,7 +196,7 @@ export default function AdvancedMetrics({ stats }) {
                 <DollarSign className="w-5 h-5 text-green-500" />
                 <Badge variant="outline" className="text-xs">Total</Badge>
               </div>
-              <div className="heading-md mb-1">${((stats.totalCost || 0) / 100).toFixed(2)}</div>
+              <div className="text-lg font-bold mb-1 break-all leading-tight">${(stats.totalCost || 0).toFixed(6)}</div>
               <p className="body-sm text-muted-foreground">Total Cost</p>
             </CardContent>
           </Card>
