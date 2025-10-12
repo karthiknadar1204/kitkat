@@ -30,10 +30,6 @@ const connectMongoDB = async (retries = 5) => {
       await mongoose.connect(process.env.MONGODB_DATABASE_URL, options);
       console.log('✅ MongoDB connected successfully');
       
-      // Start snapshot worker immediately after connection
-      const { startSnapshotWorker } = await import('./services/snapshotWorker.js');
-      startSnapshotWorker();
-      
       // Handle connection events
       mongoose.connection.on('disconnected', () => {
         console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');

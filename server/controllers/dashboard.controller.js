@@ -1,5 +1,4 @@
 import Trace from '../models/trace.model.js';
-import MetricSnapshot from '../models/metricSnapshot.model.js';
 import { eq } from 'drizzle-orm';
 import { sessions, stats } from '../config/schema.js';  
 import { db } from '../config/db.js';
@@ -284,82 +283,6 @@ export const getDashboardStats = async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('getDashboardStats error:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const getTimeSeriesData = async (req, res) => {
-  try {
-    const { id: userId } = req.user;
-    const { sessionId } = req.params;
-    const { period = 'hourly', days = 7 } = req.query;
-    
-    console.log(`Fetching time-series data for session ${sessionId}, period: ${period}, days: ${days}`);
-    
-    // Verify session belongs to user
-    const [session] = await db.select().from(sessions).where(eq(sessions.id, parseInt(sessionId)));
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    if (session.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-    
-    // Calculate date range
-    const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - parseInt(days) * 24 * 60 * 60 * 1000);
-    
-    // Fetch snapshots
-    const snapshots = await MetricSnapshot.find({
-      sessionId: parseInt(sessionId),
-      period: period,
-      timestamp: {
-        $gte: startDate,
-        $lte: endDate,
-      },
-    }).sort({ timestamp: 1 });
-    
-    console.log(`Found ${snapshots.length} snapshots for time-series`);
-    
-    // Format for frontend charting
-    const timeSeriesData = snapshots.map(snapshot => ({
-      timestamp: snapshot.timestamp,
-      ...snapshot.metrics,
-    }));
-    
-    res.json(timeSeriesData);
-  } catch (error) {
-    console.error('getTimeSeriesData error:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Manual trigger for testing - creates snapshot for last hour
-export const triggerSnapshot = async (req, res) => {
-  try {
-    const { id: userId } = req.user;
-    const { sessionId } = req.params;
-    
-    // Verify session belongs to user
-    const [session] = await db.select().from(sessions).where(eq(sessions.id, parseInt(sessionId)));
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    if (session.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-    
-    // Import aggregation function
-    const { createHourlySnapshots } = await import('../services/snapshotWorker.js');
-    
-    // Trigger snapshot creation
-    await createHourlySnapshots();
-    
-    res.json({ message: 'Snapshot creation triggered', sessionId: parseInt(sessionId) });
-  } catch (error) {
-    console.error('triggerSnapshot error:', error);
     res.status(500).json({ error: error.message });
   }
 };
