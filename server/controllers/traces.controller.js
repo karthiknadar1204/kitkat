@@ -39,6 +39,16 @@ export const ingestTrace = async (req, res) => {
     return res.status(404).json({ error: 'Invalid session or access denied' });
   }
 
+  // SECURITY: Validate that the appName matches the session's project name
+  if (appName && session.appName !== appName) {
+    return res.status(403).json({ 
+      error: `Project name mismatch. This API key is bound to project "${session.appName}" (session ${finalSessionId}), but you're trying to send traces to "${appName}". Please update KYRA_PROJECT=${session.appName} in your .env file.`,
+      expectedProject: session.appName,
+      providedProject: appName,
+      sessionId: finalSessionId
+    });
+  }
+
   const traceId = uuidv4();
   const newTrace = new Trace({
     traceId,

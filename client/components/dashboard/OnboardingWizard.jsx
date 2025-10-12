@@ -103,7 +103,7 @@ export default function OnboardingWizard({
               <pre className="bg-muted/50 rounded-lg p-4 overflow-x-auto body-sm">
                 <code>{`# Required
 KYRA_API_KEY=${newApiKey}
-KYRA_ENDPOINT=http://localhost:3002/api
+KYRA_ENDPOINT=https://kitkat-production.up.railway.app/api
 KYRA_PROJECT=${projectName}
 OPENAI_API_KEY=sk-your_openai_key_here
 
@@ -116,7 +116,7 @@ KYRA_TRACING=true`}</code>
                 className="absolute top-2 right-2"
                 onClick={() => copyToClipboard(`# Required
 KYRA_API_KEY=${newApiKey}
-KYRA_ENDPOINT=http://localhost:3002/api
+KYRA_ENDPOINT=https://kitkat-production.up.railway.app/api
 KYRA_PROJECT=${projectName}
 OPENAI_API_KEY=sk-your_openai_key_here
 

@@ -19,7 +19,7 @@ npm install kyra-observability-sdk
 
 ### 1. Get Your API Key
 
-Sign up for Kyra and generate an API key from your dashboard. The SDK connects to Kyra cloud by default - no additional configuration needed.
+Sign up for Kyra and generate an API key from your dashboard at `https://kitkat-production.up.railway.app`. The SDK connects to Kyra production automatically - no endpoint configuration needed.
 
 ### 2. Environment Variables
 
@@ -34,8 +34,9 @@ OPENAI_API_KEY=sk-your_openai_key_here
 KYRA_PROJECT=my-app
 KYRA_TRACING=true
 
-# Optional - Only needed if self-hosting
-# KYRA_ENDPOINT=https://your-kyra-instance.com/api
+# Note: KYRA_ENDPOINT defaults to https://kitkat-production.up.railway.app/api
+# Only override if you're self-hosting:
+# KYRA_ENDPOINT=https://your-self-hosted-kyra.com/api
 ```
 
 ## Usage
@@ -104,12 +105,17 @@ ragPipeline();
 ### Custom Configuration
 
 ```javascript
-// Override defaults if needed (e.g., for self-hosted instances)
+// Basic usage (connects to production by default)
 const sdk = new Kyra({
   apiKey: 'lsv2_your_key',
   project: 'my-custom-project',
   tracingEnabled: true,
-  endpoint: 'https://your-self-hosted-kyra.com/api', // Only for self-hosting
+});
+
+// Only override endpoint if self-hosting
+const selfHostedSdk = new Kyra({
+  apiKey: 'lsv2_your_key',
+  endpoint: 'https://your-self-hosted-kyra.com/api',
 });
 ```
 
@@ -139,7 +145,7 @@ Creates a new SDK instance.
 - `apiKey` (string): Kyra API key (defaults to `KYRA_API_KEY` env var) - **Required**
 - `project` (string): Project name (defaults to `KYRA_PROJECT` env var or `'default'`)
 - `tracingEnabled` (boolean): Enable tracing (defaults to `true` unless `KYRA_TRACING='false'`)
-- `endpoint` (string): Backend endpoint (defaults to Kyra cloud, override with `KYRA_ENDPOINT` for self-hosting)
+- `endpoint` (string): Backend endpoint (defaults to `https://kitkat-production.up.railway.app/api`, override with `KYRA_ENDPOINT` for self-hosting)
 
 ### `sdk.chatCompletions(params)`
 
