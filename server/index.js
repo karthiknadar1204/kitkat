@@ -66,13 +66,11 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({extended:true}))
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'https://kitkat-ten.vercel.app',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    exposedHeaders: ['Set-Cookie'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204
+    exposedHeaders: ['Set-Cookie']
 }))
 app.use(bodyParser.json())
 
