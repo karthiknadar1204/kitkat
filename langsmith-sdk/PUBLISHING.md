@@ -21,7 +21,7 @@ npm install ../langsmith-sdk/kyra-observability-sdk-0.1.1.tgz
 node test.js
 ```
 
-✅ **Test Results:**
+**Test Results:**
 - Package installs successfully
 - OpenAI integration works
 - Chain execution works
@@ -197,7 +197,7 @@ For publishing issues:
 
 ## Current Status
 
-✅ **Package is ready for publishing!**
+**Package is ready for publishing!**
 
 The package has been:
 - Successfully built

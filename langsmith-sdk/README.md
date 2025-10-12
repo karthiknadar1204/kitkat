@@ -4,12 +4,10 @@ A lightweight SDK for tracing LLM calls and multi-step chains with OpenAI integr
 
 ## Features
 
-- 🚀 **Zero-config OpenAI Integration** - Drop-in replacement for OpenAI SDK
-- 📊 **Automatic Tracing** - Capture input, output, latency, and token usage
-- 🔗 **Multi-step Chain Support** - Track complex RAG flows with multiple spans
-- 🎯 **Sampling & Control** - Configurable tracing rates for production
-- 🛡️ **Error Handling** - Graceful failure without breaking your app
-- 🔧 **Environment-based Config** - Control via environment variables
+- **Zero-config OpenAI Integration** - Drop-in replacement for OpenAI SDK
+- **Automatic Tracing** - Capture input, output, latency, and token usage
+- **Multi-step Chain Support** - Track complex RAG flows with multiple spans
+- **Error Handling** - Graceful failure without breaking your app
 
 ## Installation
 
@@ -17,9 +15,13 @@ A lightweight SDK for tracing LLM calls and multi-step chains with OpenAI integr
 npm install kyra-observability-sdk
 ```
 
-## Setup
+## Getting Started
 
-### Environment Variables
+### 1. Get Your API Key
+
+Sign up for Kyra and generate an API key from your dashboard. The SDK connects to Kyra cloud by default - no additional configuration needed.
+
+### 2. Environment Variables
 
 Set the following environment variables in your `.env` file:
 
@@ -28,21 +30,13 @@ Set the following environment variables in your `.env` file:
 KYRA_API_KEY=lsv2_your_api_key_here
 OPENAI_API_KEY=sk-your_openai_key_here
 
-# Optional (with defaults)
-KYRA_ENDPOINT=http://localhost:3002/api
+# Optional
 KYRA_PROJECT=my-app
 KYRA_TRACING=true
+
+# Optional - Only needed if self-hosting
+# KYRA_ENDPOINT=https://your-kyra-instance.com/api
 ```
-
-### Configuration Options
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `KYRA_API_KEY` | Your Kyra API key (required) | - |
-| `OPENAI_API_KEY` | Your OpenAI API key (required) | - |
-| `KYRA_ENDPOINT` | Backend endpoint URL | `http://localhost:3002/api` |
-| `KYRA_PROJECT` | Project name for organizing traces | `default` |
-| `KYRA_TRACING` | Enable/disable tracing | `true` |
 
 ## Usage
 
@@ -110,11 +104,12 @@ ragPipeline();
 ### Custom Configuration
 
 ```javascript
+// Override defaults if needed (e.g., for self-hosted instances)
 const sdk = new Kyra({
   apiKey: 'lsv2_your_key',
-  endpoint: 'https://your-backend.com/api',
   project: 'my-custom-project',
   tracingEnabled: true,
+  endpoint: 'https://your-self-hosted-kyra.com/api', // Only for self-hosting
 });
 ```
 
@@ -141,10 +136,10 @@ try {
 Creates a new SDK instance.
 
 **Options:**
-- `apiKey` (string): Kyra API key (defaults to `KYRA_API_KEY`)
-- `endpoint` (string): Backend endpoint (defaults to `KYRA_ENDPOINT`)
-- `project` (string): Project name (defaults to `KYRA_PROJECT`)
-- `tracingEnabled` (boolean): Enable tracing (defaults to `KYRA_TRACING === 'true'`)
+- `apiKey` (string): Kyra API key (defaults to `KYRA_API_KEY` env var) - **Required**
+- `project` (string): Project name (defaults to `KYRA_PROJECT` env var or `'default'`)
+- `tracingEnabled` (boolean): Enable tracing (defaults to `true` unless `KYRA_TRACING='false'`)
+- `endpoint` (string): Backend endpoint (defaults to Kyra cloud, override with `KYRA_ENDPOINT` for self-hosting)
 
 ### `sdk.chatCompletions(params)`
 
@@ -232,7 +227,7 @@ async function test() {
       messages: [{ role: 'user', content: 'Test publish!' }],
       max_tokens: 50,
     });
-    console.log('✅ Response:', response.choices[0].message.content);
+    console.log('Response:', response.choices[0].message.content);
 
     const steps = [
       { 
@@ -252,9 +247,9 @@ async function test() {
     ];
     
     const { results, traceId } = await sdk.wrapChain(steps);
-    console.log('✅ Chain Trace ID:', traceId);
+    console.log('Chain Trace ID:', traceId);
   } catch (err) {
-    console.error('❌ Error:', err.message);
+    console.error('Error:', err.message);
   }
 }
 
@@ -317,10 +312,11 @@ await sdk.addFeedback(traceId, {
 
 ### Traces Not Appearing
 
-1. Check backend is running: `curl http://localhost:3002/api/traces -H "X-API-Key: your_key"`
-2. Verify `KYRA_TRACING=true` in `.env`
-3. Check API key is valid
-4. Review console logs for error messages
+1. Verify `KYRA_TRACING=true` in `.env`
+2. Check API key is valid and properly set
+3. Review console logs for error messages
+4. Ensure network connectivity to Kyra backend
+5. Check if traces appear in your Kyra dashboard
 
 ### High Latency
 

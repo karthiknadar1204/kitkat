@@ -1,6 +1,6 @@
 {
   "name": "kyra-observability-sdk",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Kyra - LLM tracing SDK for monitoring calls and multi-step chains with OpenAI integration",
   "main": "lib/index.js",
   "scripts": {

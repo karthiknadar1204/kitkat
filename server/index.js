@@ -72,8 +72,9 @@ app.use(express.urlencoded({extended:true}))
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    exposedHeaders: ['Set-Cookie']
 }))
 app.use(bodyParser.json())
 
