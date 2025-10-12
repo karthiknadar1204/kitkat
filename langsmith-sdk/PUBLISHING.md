@@ -1,4 +1,4 @@
-# Publishing Guide for LangSmith SDK
+# Publishing Guide for Kyra Observability SDK
 
 ## Pre-Publishing Checklist
 
@@ -14,10 +14,10 @@
 ```bash
 # In SDK directory
 npm pack
-# Creates langsmith-sdk-0.1.0.tgz
+# Creates kyra-observability-sdk-0.1.1.tgz
 
 # In test directory
-npm install ../langsmith-sdk/langsmith-sdk-0.1.0.tgz
+npm install ../langsmith-sdk/kyra-observability-sdk-0.1.1.tgz
 node test.js
 ```
 
@@ -56,22 +56,22 @@ npm publish
 
 ### Step 4: Verify Publication
 ```bash
-npm view langsmith-sdk
+npm view kyra-observability-sdk
 ```
 
 ## Using Published Package
 
 ### Installation
 ```bash
-npm install langsmith-sdk
+npm install kyra-observability-sdk
 ```
 
 ### Usage
 ```javascript
 require('dotenv').config();
-const LangSmithSDK = require('langsmith-sdk');
+const Kyra = require('kyra-observability-sdk');
 
-const sdk = new LangSmithSDK();
+const sdk = new Kyra();
 
 async function main() {
   const response = await sdk.chatCompletions({
@@ -88,19 +88,20 @@ main();
 
 ### Semantic Versioning
 - **0.1.0** - Initial release
+- **0.1.1** - Current version (bug fixes)
 - **0.1.x** - Bug fixes
 - **0.x.0** - New features (backwards compatible)
 - **x.0.0** - Breaking changes
 
 ### Updating Version
 ```bash
-# Patch (0.1.0 -> 0.1.1)
+# Patch (0.1.1 -> 0.1.2)
 npm version patch
 
-# Minor (0.1.0 -> 0.2.0)
+# Minor (0.1.1 -> 0.2.0)
 npm version minor
 
-# Major (0.1.0 -> 1.0.0)
+# Major (0.1.1 -> 1.0.0)
 npm version major
 ```
 
@@ -124,7 +125,7 @@ npm publish
 ### Using GitHub Packages
 1. Create `.npmrc` in SDK root:
 ```
-registry=https://npm.pkg.github.com/yourusername
+registry=https://npm.pkg.github.com/karthiknadar1204
 ```
 
 2. Authenticate:
@@ -135,8 +136,8 @@ npm login --registry=https://npm.pkg.github.com
 3. Update `package.json`:
 ```json
 {
-  "name": "@yourusername/langsmith-sdk",
-  "repository": "git://github.com/yourusername/langsmith-sdk.git"
+  "name": "@karthiknadar1204/kyra-observability-sdk",
+  "repository": "git://github.com/karthiknadar1204/kyra.git"
 }
 ```
 
@@ -152,8 +153,8 @@ npm publish
 - Create changelog entry
 - Tag release in Git:
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 ### Monitor
@@ -165,7 +166,7 @@ git push origin v0.1.0
 
 ### "Package already exists"
 - Package name is taken
-- Change name in `package.json` to something unique like `@yourusername/langsmith-sdk`
+- Change name in `package.json` to something unique like `@karthiknadar1204/kyra-observability-sdk`
 
 ### "Authentication failed"
 ```bash
@@ -205,4 +206,13 @@ The package has been:
 - Versioned
 
 **To publish:** Run `npm publish --access public` in the `langsmith-sdk` directory.
+
+---
+
+## Published Package Info
+
+**Package Name:** `kyra-observability-sdk`  
+**Current Version:** `0.1.1`  
+**NPM URL:** https://www.npmjs.com/package/kyra-observability-sdk  
+**GitHub:** https://github.com/karthiknadar1204/kyra
 

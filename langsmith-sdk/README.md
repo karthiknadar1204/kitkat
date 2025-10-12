@@ -1,4 +1,4 @@
-# LangSmith SDK
+# Kyra Observability SDK
 
 A lightweight SDK for tracing LLM calls and multi-step chains with OpenAI integration. Capture latency, tokens, and detailed execution traces for debugging and monitoring AI applications.
 
@@ -50,7 +50,7 @@ KYRA_TRACING=true
 
 ```javascript
 require('dotenv').config();
-const LangSmithSDK = require('langsmith-sdk');
+const Kyra = require('kyra-observability-sdk');
 
 const sdk = new Kyra();
 
@@ -206,7 +206,7 @@ Before publishing, test the package locally:
 # In SDK directory
 npm pack
 
-# Creates langsmith-sdk-0.1.0.tgz
+# Creates kyra-observability-sdk-0.1.1.tgz
 ```
 
 Install in a test app:
@@ -214,14 +214,14 @@ Install in a test app:
 ```bash
 mkdir test-app && cd test-app
 npm init -y
-npm install ../langsmith-sdk/langsmith-sdk-0.1.0.tgz
+npm install ../langsmith-sdk/kyra-observability-sdk-0.1.1.tgz
 ```
 
 Create `test-app/test.js`:
 
 ```javascript
 require('dotenv').config();
-const LangSmithSDK = require('langsmith-sdk');
+const Kyra = require('kyra-observability-sdk');
 
 async function test() {
   const sdk = new Kyra();
@@ -277,7 +277,7 @@ node test.js
        │ SDK Wrapper
        ▼
 ┌──────────────┐     Traces      ┌──────────────┐
-│   OpenAI     │ ◄────────────► │   LangSmith  │
+│   OpenAI     │ ◄────────────► │     Kyra     │
 │     API      │                 │   Backend    │
 └──────────────┘                 └──────────────┘
                                         │
@@ -318,15 +318,15 @@ await sdk.addFeedback(traceId, {
 ### Traces Not Appearing
 
 1. Check backend is running: `curl http://localhost:3002/api/traces -H "X-API-Key: your_key"`
-2. Verify `LANGSMITH_TRACING=true` in `.env`
+2. Verify `KYRA_TRACING=true` in `.env`
 3. Check API key is valid
 4. Review console logs for error messages
 
 ### High Latency
 
-- Reduce `LANGSMITH_SAMPLE_RATE` to lower tracing overhead
 - Ensure backend is responding quickly
-- Consider async tracing (default behavior)
+- Tracing is async by default and shouldn't impact latency
+- Consider disabling tracing in high-load scenarios
 
 ## License
 
@@ -339,8 +339,8 @@ Contributions welcome! Please open an issue or PR.
 ## Support
 
 For issues and questions:
-- GitHub Issues: https://github.com/yourusername/langsmith-sdk/issues
-- Email: your.email@example.com
+- GitHub Issues: https://github.com/karthiknadar1204/kyra/issues
+- Email: support@kyra.dev
 
 ## Changelog
 
