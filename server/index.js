@@ -70,7 +70,9 @@ app.use(cors({
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    exposedHeaders: ['Set-Cookie']
+    exposedHeaders: ['Set-Cookie'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }))
 app.use(bodyParser.json())
 
