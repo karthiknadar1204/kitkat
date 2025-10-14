@@ -60,20 +60,17 @@ export default function Home() {
               <span className="body-sm text-muted-foreground ml-4">example.js</span>
             </div>
             <pre className="text-sm text-foreground overflow-x-auto">
-              <code>{`import { Kyra } from 'kyra-sdk';
-import OpenAI from 'openai';
+              <code>{`const Kyra = require('kyra-observability-sdk');
 
-const kyra = new Kyra({
-  apiKey: process.env.KYRA_API_KEY
+const kyra = new Kyra();
+
+// All calls are automatically traced!
+const response = await kyra.chatCompletions({
+  model: "gpt-4o-mini",
+  messages: [{ role: "user", content: "Hello!" }]
 });
 
-const openai = kyra.wrapOpenAI(new OpenAI());
-
-// All calls are now traced automatically
-const response = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [{ role: "user", content: "Hello!" }]
-});`}</code>
+console.log(response.choices[0].message.content);`}</code>
             </pre>
           </div>
         </div>
@@ -120,26 +117,6 @@ const response = await openai.chat.completions.create({
               title="Developer First"
               description="Simple API, comprehensive docs, and TypeScript support out of the box."
             />
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 px-6 gradient-bg">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-12 text-center">
-            <div>
-              <div className="heading-xl gradient-text mb-2">99.9%</div>
-              <p className="body-md text-muted-foreground">Uptime SLA</p>
-            </div>
-            <div>
-              <div className="heading-xl gradient-text mb-2">&lt;5ms</div>
-              <p className="body-md text-muted-foreground">Average Overhead</p>
-            </div>
-            <div>
-              <div className="heading-xl gradient-text mb-2">10M+</div>
-              <p className="body-md text-muted-foreground">Traces Processed</p>
-            </div>
           </div>
         </div>
       </section>

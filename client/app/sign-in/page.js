@@ -57,24 +57,6 @@ export default function SignInPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Social Sign In */}
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="border-border hover:bg-secondary">
-                <Github className="w-5 h-5 mr-2" />
-                GitHub
-              </Button>
-              <Button variant="outline" className="border-border hover:bg-secondary">
-                <Mail className="w-5 h-5 mr-2" />
-                Google
-              </Button>
-            </div>
-
-            <div className="relative">
-              <Separator className="bg-border" />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 body-sm text-muted-foreground">
-                or continue with email
-              </span>
-            </div>
 
             {/* Email Sign In Form */}
             <form className="space-y-4" onSubmit={handleSubmit}>

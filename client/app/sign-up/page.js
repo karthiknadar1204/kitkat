@@ -65,22 +65,9 @@ export default function SignUpPage() {
             </div>
 
             <div className="space-y-4">
-              <BenefitItem text="Free tier with 10,000 traces per month" />
               <BenefitItem text="Real-time monitoring and analytics" />
               <BenefitItem text="Advanced error tracking and debugging" />
-              <BenefitItem text="Team collaboration features" />
-              <BenefitItem text="99.9% uptime SLA" />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Badge variant="secondary" className="px-4 py-2">
-                <Check className="w-4 h-4 mr-2 inline" />
-                No credit card required
-              </Badge>
-              <Badge variant="secondary" className="px-4 py-2">
-                <Check className="w-4 h-4 mr-2 inline" />
-                Cancel anytime
-              </Badge>
+              <BenefitItem text="Production-grade observability" />
             </div>
           </div>
 
@@ -94,24 +81,6 @@ export default function SignUpPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Social Sign Up */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="border-border hover:bg-secondary">
-                    <Github className="w-5 h-5 mr-2" />
-                    GitHub
-                  </Button>
-                  <Button variant="outline" className="border-border hover:bg-secondary">
-                    <Mail className="w-5 h-5 mr-2" />
-                    Google
-                  </Button>
-                </div>
-
-                <div className="relative">
-                  <Separator className="bg-border" />
-                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 body-sm text-muted-foreground">
-                    or sign up with email
-                  </span>
-                </div>
 
                 {/* Sign Up Form */}
                 <form className="space-y-4" onSubmit={handleSubmit}>
