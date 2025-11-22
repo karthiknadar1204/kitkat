@@ -17,6 +17,7 @@ import AdvancedMetrics from "@/components/dashboard/AdvancedMetrics";
 import ApiKeySidebar from "@/components/dashboard/ApiKeySidebar";
 import TracesTable from "@/components/dashboard/TracesTable";
 import TraceDetailSidebar from "@/components/dashboard/TraceDetailSidebar";
+import LiveLogsPanel from "@/components/dashboard/LiveLogsPanel";
 
 export default function ProjectDetailPage() {
   const router = useRouter();
@@ -309,6 +310,11 @@ export default function ProjectDetailPage() {
 
             {/* Advanced Metrics (Collapsible) */}
             {showAdvancedMetrics && <AdvancedMetrics stats={stats} />}
+
+            {/* Live Logs Panel */}
+            <div className="mb-8">
+              <LiveLogsPanel sessionId={sessionId} />
+            </div>
           </>
         )}
 

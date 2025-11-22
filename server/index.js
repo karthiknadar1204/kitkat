@@ -4,12 +4,14 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import mongoose from 'mongoose'
+import { createServer } from 'http'
 import authRoutes from './routes/auth.route.js'
 import sessionsRoutes from './routes/sessions.route.js'
 import tracesRoutes from './routes/traces.route.js'
 import apiKeysRoutes from './routes/apiKeys.route.js'
 import dashboardRoutes from './routes/dashboard.route.js'
 import { db } from './config/db.js'
+import { initializeWebSocket } from './services/websocket.js'
 
 // dotenv.config()
 
@@ -115,6 +117,13 @@ app.use("/api/traces",tracesRoutes)
 app.use("/api/api-keys",apiKeysRoutes)
 app.use("/api/dashboard",dashboardRoutes)
 
-app.listen(3002,()=>{
-    console.log("server is running on port 3002")
+// Create HTTP server for WebSocket support
+const server = createServer(app);
+
+// Initialize WebSocket server
+initializeWebSocket(server);
+
+server.listen(3002, () => {
+    console.log("🚀 Server is running on port 3002")
+    console.log("🔌 WebSocket server available at ws://localhost:3002/ws")
 })

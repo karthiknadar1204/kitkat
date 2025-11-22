@@ -8,6 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "start": "node index.js",
+    "worker": "node workers/traceProcessor.worker.js",
+    "dev:worker": "nodemon workers/traceProcessor.worker.js",
     "build": "drizzle-kit generate && drizzle-kit push && echo 'Build successful - Express backend ready'",
     "init-mongodb": "node scripts/init-mongodb.js"
   },
@@ -18,18 +20,21 @@
     "@neondatabase/serverless": "^1.0.2",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
+    "bullmq": "^5.64.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.6",
     "express": "^5.1.0",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
     "nodemon": "^3.1.10",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.5"

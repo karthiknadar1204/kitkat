@@ -3,16 +3,16 @@ import Trace from '../models/trace.model.js';
 import { eq } from 'drizzle-orm';
 import { sessions, stats } from '../config/schema.js';  
 import { db } from '../config/db.js';
-import { processTraceStats } from '../services/statsWorker.js';
+import { enqueueTrace } from '../queues/traceQueue.js';
+import { emitLogEvent } from '../services/redis.js';
 
 export const ingestTrace = async (req, res) => {
   const { sessionId, appName, spans, metadata = {} } = req.body;
   const { id: userId } = req.user;
-  const apiKeySessionId = req.apiKeySession; // Session ID from the API key
+  const apiKeySessionId = req.apiKeySession;
 
   let finalSessionId = sessionId;
   
-  // Validate API key is bound to a session
   if (!apiKeySessionId) {
     return res.status(403).json({ 
       error: 'API key not bound to a project. Please generate a new API key from your dashboard.' 
@@ -20,11 +20,9 @@ export const ingestTrace = async (req, res) => {
   }
   
   if (!sessionId) {
-    // If no sessionId provided, use the one from API key
     finalSessionId = apiKeySessionId;
     console.log(`Using API key's bound session ${finalSessionId}`);
   } else {
-    // If sessionId provided, validate it matches the API key's session
     if (sessionId !== apiKeySessionId) {
       return res.status(403).json({ 
         error: `API key is bound to a different project. This key can only be used for session ${apiKeySessionId}.` 
@@ -33,13 +31,11 @@ export const ingestTrace = async (req, res) => {
     finalSessionId = sessionId;
   }
   
-  // Verify session exists and belongs to user
   const [session] = await db.select().from(sessions).where(eq(sessions.id, finalSessionId));
   if (!session || session.userId !== userId) {
     return res.status(404).json({ error: 'Invalid session or access denied' });
   }
 
-  // SECURITY: Validate that the appName matches the session's project name
   if (appName && session.appName !== appName) {
     return res.status(403).json({ 
       error: `Project name mismatch. This API key is bound to project "${session.appName}" (session ${finalSessionId}), but you're trying to send traces to "${appName}". Please update KYRA_PROJECT=${session.appName} in your .env file.`,
@@ -50,6 +46,7 @@ export const ingestTrace = async (req, res) => {
   }
 
   const traceId = uuidv4();
+  
   const newTrace = new Trace({
     traceId,
     userId,
@@ -60,9 +57,35 @@ export const ingestTrace = async (req, res) => {
   });
   await newTrace.save();
 
-  processTraceStats(finalSessionId, spans);
+  await emitLogEvent(finalSessionId, {
+    type: 'trace-received',
+    event: 'trace-received',
+    traceId,
+    sessionId: finalSessionId,
+    appName,
+    spanCount: spans.length,
+    status: 'queued',
+  });
 
-  res.status(201).json({ message: 'Trace ingested', traceId, sessionId: finalSessionId });
+  try {
+    const job = await enqueueTrace({
+      traceId,
+      userId,
+      sessionId: finalSessionId,
+      appName,
+      spans,
+      metadata,
+    });
+    console.log(` Trace ${traceId} enqueued as job ${job.id}`);
+  } catch (error) {
+    console.error(' Error enqueueing trace:', error);
+  }
+
+  res.status(202).json({ 
+    message: 'Trace received and queued for processing', 
+    traceId, 
+    sessionId: finalSessionId 
+  });
 };
 
 export const getTraces = async (req, res) => {
