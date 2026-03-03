@@ -65,8 +65,14 @@ const app=express()
 app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({extended:true}))
+// When credentials are included, browser requires a specific origin (not *) in Access-Control-Allow-Origin
+const allowedOrigins = [process.env.FRONTEND_URL || 'https://kitkat-ten.vercel.app'].filter(Boolean)
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'https://kitkat-ten.vercel.app',
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, allowedOrigins[0])
+        if (allowedOrigins.includes(origin)) return callback(null, origin)
+        return callback(null, false)
+    },
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
